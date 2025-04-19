@@ -26,6 +26,7 @@ pyautogui.FAILSAFE = False
 class KeyboardSignals(QObject):
     key_c_pressed = pyqtSignal()  # C tuşu - Oynat
     key_b_pressed = pyqtSignal()  # B tuşu - Kaydı Durdur
+    key_k_pressed = pyqtSignal()  # K tuşu - Kaydı Başlat
     esc_pressed = pyqtSignal()    # ESC tuşu - Durdur
 
 # Fare olaylarını izlemek için sınıf
@@ -247,11 +248,13 @@ class PointRecorderApp(QMainWindow):
         self.keyboard_signals = KeyboardSignals()
         self.keyboard_signals.key_c_pressed.connect(self.on_key_c_pressed)
         self.keyboard_signals.key_b_pressed.connect(self.on_key_b_pressed)
+        self.keyboard_signals.key_k_pressed.connect(self.on_key_k_pressed)
         self.keyboard_signals.esc_pressed.connect(self.on_esc_pressed)
         
         # Klavye olaylarını izleme için son tuş basma zamanları
         self.last_key_c_press = 0
         self.last_key_b_press = 0
+        self.last_key_k_press = 0
         self.last_esc_press = 0
         
         # Arayüz
@@ -300,9 +303,15 @@ class PointRecorderApp(QMainWindow):
         self.main_layout.addWidget(self.profile_label)
         
         # Kısayol açıklaması
-        self.keyboard_label = QLabel("B tuşu: Kaydı durdur | C tuşu: Oynat | ESC tuşu: Durdur")
-        self.keyboard_label.setAlignment(Qt.AlignCenter)
-        self.main_layout.addWidget(self.keyboard_label)
+        keyboard_shortcuts_label = QLabel(
+            "Klavye Kısayolları:\n"
+            "K - Kaydı Başlat\n"
+            "B - Kaydı Durdur\n"
+            "C - Oynat\n"
+            "ESC - Durdur"
+        )
+        keyboard_shortcuts_label.setStyleSheet("color: #666; font-size: 10px;")
+        self.main_layout.addWidget(keyboard_shortcuts_label)
         
         # Bir boşluk ekle
         self.main_layout.addSpacing(10)
@@ -461,6 +470,12 @@ class PointRecorderApp(QMainWindow):
                     self.last_key_c_press = current_time
                     self.keyboard_signals.key_c_pressed.emit()
             
+            # K tuşu kontrolü (Kaydı Başlat)
+            if keyboard.is_pressed('k'):
+                if current_time - self.last_key_k_press > 0.5:
+                    self.last_key_k_press = current_time
+                    self.keyboard_signals.key_k_pressed.emit()
+            
             # ESC tuşu kontrolü (Durdur)
             if keyboard.is_pressed('esc'):
                 if current_time - self.last_esc_press > 0.5:
@@ -547,6 +562,14 @@ class PointRecorderApp(QMainWindow):
         self.stop_recording()
     
     @pyqtSlot()
+    def on_key_k_pressed(self):
+        """
+        K tuşuna basılınca çağrılır - Kaydı başlatır
+        """
+        print("K tuşuna basıldı, kayıt başlatılıyor")
+        self.start_recording()
+    
+    @pyqtSlot()
     def on_esc_pressed(self):
         """
         ESC tuşuna basılınca çağrılır - Oynatma veya kaydı durdurur
@@ -569,6 +592,11 @@ class PointRecorderApp(QMainWindow):
         self.is_recording = True
         self.last_click_time = None  # Son tıklama zamanını sıfırla
         self.status_label.setText("Kayıt yapılıyor... (Durdurmak için 'B' tuşuna basın)")
+        
+        # Buton durumlarını güncelle
+        self.record_button.setEnabled(False)
+        self.stop_record_button.setEnabled(True)
+        self.play_button.setEnabled(False)
         
         # Fare dinleme başlat
         self.mouse_listener.start_listening()
