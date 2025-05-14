@@ -138,6 +138,6 @@ Bu proje MIT Lisansı altında lisanslanmıştır - detaylar için LICENSE dosya
 ## Ekran Görüntüleri
 
 <div style="display: flex; justify-content: space-between;">
-    <img src="images/screenshot.png" alt="Screenshot 1" width="45%">
+    <img src="images/screenshot-tr.png" alt="Screenshot 1" width="45%">
     <img src="images/screenshot-en.png" alt="Screenshot 2" width="45%">
 </div> 
