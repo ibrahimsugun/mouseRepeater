@@ -1,101 +1,143 @@
-# Fare Kaydedici (Mouse Recorder) v0.3
+# Mouse Recorder
 
-Fare Kaydedici, ekranda fare tıklamalarını kaydedip sonrasında bu tıklamaları otomatik olarak tekrarlayan basit bir otomasyon uygulamasıdır.
+![Mouse Recorder Screenshot](images/screenshot-en.png)
 
-## Özellikler
+A simple and efficient mouse click recorder and player application that allows you to record and replay mouse clicks with customizable options.
 
-- Tüm fare tıklamalarını (sağ ve sol) ve tıklamalar arasındaki gecikmeleri kaydetme
-- Kaydedilen noktalarda otomatik sağ/sol tıklama yapma
-- Orijinal tıklama gecikmelerini taklit etme veya sabit gecikme kullanma
-- Tek seferlik veya sürekli tekrarlama seçeneği
-- Kayıtları profil olarak saklama ve yükleme
-- Klavye kısayolları ile kolay kullanım
-- Windows sistemlerde win32api ile gerçek fare tıklaması
+## Features
 
-## Teknik Detaylar
+- Record left and right mouse clicks with their positions
+- Save and load click sequences as profiles
+- Playback recorded clicks with original timing
+- Option to repeat playback
+- Keyboard shortcuts for quick control
+- Support for both Turkish and English languagess
+- Customizable delay settings
 
-Program PyQt5 kullanarak geliştirilmiş bir arayüze sahiptir ve şu özellikler ile çalışır:
+## Requirements
 
-- Klavye izleme için `keyboard` kütüphanesi kullanılır
-- Fare tıklamaları için `win32api` kullanılır
-- Ekran koordinatları ile çalışmak için `pyautogui` kullanılır
-- Çoklu thread desteği sayesinde arayüz kilitlenmeden arka planda işlemler yapılabilir
-- Profil verileri INI formatında saklanır (settings.ini)
+- Python 3.6 or higher
+- Windows operating system
+- Required Python packages (see requirements.txt)
 
-## Kullanım
+## Installation
 
-1. Uygulamayı başlatın
-2. "Tıklamaları Kaydet" butonuna tıklayarak kayda başlayın
-3. İstediğiniz yerlere sağ veya sol tıklamalar yapın
-4. "B" tuşuna basarak veya "Kaydı Durdur" butonuna tıklayarak kaydı durdurun
-5. "Profil Adı" kısmına bir isim girin ve "Kaydet" butonuna tıklayarak kaydınızı saklayın
-6. "Oynat" butonuna tıklayarak kaydedilmiş tıklamaları oynatın
-7. Durdurmak için "Durdur" butonunu kullanın veya "ESC" tuşuna basın
-
-## Profil Yönetimi
-
-- **Kaydet**: Mevcut tıklama verilerini belirtilen profil adıyla kaydeder
-- **Yükle**: Belirtilen profil adından tıklama verilerini yükler
-- **Sıfırla**: Mevcut tıklama verilerini temizler
-
-Tüm profiller `settings.ini` dosyasına kaydedilir ve program yeniden başlatıldığında son kullanılan profil otomatik olarak yüklenir.
-
-## Oynatma Seçenekleri
-
-- **Sürekli tekrarla**: İşaretlendiğinde, tıklama serisi sürekli tekrarlanır
-- **Kaydedilen tıklama gecikmelerini kullan**: İşaretlendiğinde, orijinal tıklama gecikmeleri kullanılır (gerçekçi zamanlama)
-
-## Klavye Kısayolları
-
-- **B** tuşu: Kaydı durdur
-- **C** tuşu: Oynat
-- **ESC** tuşu: Durdur
-
-## Gereksinimler
-
-- Python 3.6 veya üzeri
-- PyQt5
-- pyautogui
-- keyboard
-- pywin32
-- configparser
-
-## Kurulum
-
-Gerekli kütüphaneleri yüklemek için:
-
-```
+1. Clone or download this repository
+2. Install required packages:
+```bash
 pip install -r requirements.txt
 ```
 
-Veya kütüphaneleri tek tek yüklemek için:
+## Usage
 
-```
-pip install PyQt5 pyautogui keyboard pywin32 configparser
-```
-
-Programı çalıştırmak için:
-
-```
+1. Run the application:
+```bash
 python point_recorder.py
 ```
 
-## Notlar
+2. Select your preferred language (English/Turkish)
 
-- Program çalışırken kaydedilen tıklamalar arayüzde gösterilir
-- Oynatma durdurulana kadar veya program kapatılana kadar devam eder
-- Otomatik tıklama yapıldığı için oynatma sırasında fareyi kullanmamaya dikkat edin
-- Tıklamalar arasındaki gerçek gecikmeler kaydedilir, böylece insansı hareketler taklit edilebilir
+3. Record clicks:
+   - Click "Record Clicks" or press 'K' to start recording
+   - Perform your mouse clicks
+   - Press 'B' or click "Stop Recording" to finish
 
-## Güvenlik
+4. Playback options:
+   - Use "Play" button or press 'C' to start playback
+   - Enable "Repeat Playback" for continuous playback
+   - Toggle "Use Recorded Delays" to maintain original timing
 
-- `pyautogui.FAILSAFE = False` ile güvenlik önlemesi devre dışı bırakılmıştır, bu nedenle oynatma sırasında dikkatli olun
-- Program sadece geliştirme ve test amaçlıdır, kötüye kullanımdan kullanıcı sorumludur
+5. Profile management:
+   - Save your click sequences as profiles
+   - Load previously saved profiles
+   - Reset to start fresh
+
+## Keyboard Shortcuts
+
+- K: Start Recording
+- B: Stop Recording
+- C: Play
+- ESC: Stop
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+# Fare Kaydedici
+
+Basit ve etkili bir fare tıklama kaydedici ve oynatıcı uygulaması. Fare tıklamalarını kaydedip, özelleştirilebilir seçeneklerle tekrar oynatmanıza olanak sağlar.
+
+## Özellikler
+
+- Sol ve sağ fare tıklamalarını konumlarıyla birlikte kaydetme
+- Tıklama dizilerini profil olarak kaydetme ve yükleme
+- Kaydedilen tıklamaları orijinal zamanlamayla oynatma
+- Tekrarlı oynatma seçeneği
+- Hızlı kontrol için klavye kısayolları
+- İngilizce ve Türkçe dil desteği
+- Özelleştirilebilir gecikme ayarları
+
+## Gereksinimler
+
+- Python 3.6 veya üstü
+- Windows işletim sistemi
+- Gerekli Python paketleri (requirements.txt dosyasına bakın)
+
+## Kurulum
+
+1. Bu depoyu klonlayın veya indirin
+2. Gerekli paketleri yükleyin:
+```bash
+pip install -r requirements.txt
+```
+
+## Kullanım
+
+1. Uygulamayı çalıştırın:
+```bash
+python point_recorder.py
+```
+
+2. Tercih ettiğiniz dili seçin (İngilizce/Türkçe)
+
+3. Tıklamaları kaydetme:
+   - Kaydetmeye başlamak için "Tıklamaları Kaydet" butonuna tıklayın veya 'K' tuşuna basın
+   - Fare tıklamalarınızı yapın
+   - Bitirmek için 'B' tuşuna basın veya "Kaydı Durdur" butonuna tıklayın
+
+4. Oynatma seçenekleri:
+   - Oynatmaya başlamak için "Oynat" butonuna tıklayın veya 'C' tuşuna basın
+   - Sürekli oynatma için "Sürekli tekrarla" seçeneğini etkinleştirin
+   - Orijinal zamanlamayı korumak için "Kaydedilen gecikmeleri kullan" seçeneğini açın/kapatın
+
+5. Profil yönetimi:
+   - Tıklama dizilerinizi profil olarak kaydedin
+   - Önceden kaydedilmiş profilleri yükleyin
+   - Sıfırlamak için "Sıfırla" butonunu kullanın
+
+## Klavye Kısayolları
+
+- K: Kaydı Başlat
+- B: Kaydı Durdur
+- C: Oynat
+- ESC: Durdur
 
 ## Lisans
 
-Bu yazılım açık kaynak olarak MIT lisansı altında dağıtılmaktadır.
+Bu proje MIT Lisansı altında lisanslanmıştır - detaylar için LICENSE dosyasına bakın.
 
-## Geliştirici
+## Versiyon Geçmişi
 
-Fare Kaydedici ekibi tarafından geliştirilmiştir. 
+- **v0.1**: İlk sürüm. Fare tıklamalarını kaydetme ve oynatma özelliği eklendi.
+- **v0.2**: Profil kaydetme ve yükleme özelliği eklendi.
+- **v0.3**: Profil kaydetme ve yükleme özelliği geliştirildi.
+- **v0.4**: Çoklu dil desteği eklendi (İngilizce ve Türkçe).
+
+## Ekran Görüntüleri
+
+<div style="display: flex; justify-content: space-between;">
+    <img src="images/screenshot.png" alt="Screenshot 1" width="45%">
+    <img src="images/screenshot-en.png" alt="Screenshot 2" width="45%">
+</div> 

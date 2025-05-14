@@ -16,11 +16,65 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, 
                            QWidget, QLabel, QHBoxLayout, QMessageBox, QCheckBox,
-                           QListWidget, QScrollArea, QLineEdit)
+                           QListWidget, QScrollArea, QLineEdit, QComboBox)
 from PyQt5.QtCore import Qt, QObject, pyqtSignal, pyqtSlot, QTimer, QEvent
 
 # PyAutoGUI failsafe özelliğini devre dışı bırak
 pyautogui.FAILSAFE = False
+
+# Language texts
+TEXTS = {
+    'en': {
+        'window_title': 'Mouse Recorder v0.3',
+        'status_ready': 'Ready - Click "Record Clicks" to start recording',
+        'status_recording': 'Recording... (Press B to stop)',
+        'status_completed': 'Recording completed - You can play now',
+        'status_playing': 'Playing...',
+        'status_stopped': 'Playback stopped',
+        'record_button': 'Record Clicks',
+        'stop_record_button': 'Stop Recording (B)',
+        'play_button': 'Play (C)',
+        'stop_button': 'Stop (ESC)',
+        'recorded_clicks': 'Recorded Clicks:',
+        'profile_operations': 'Profile Operations:',
+        'profile_name': 'Profile Name:',
+        'save': 'Save',
+        'load': 'Load',
+        'reset': 'Reset',
+        'playback_options': 'Playback Options:',
+        'repeat_playback': 'Repeat Playback',
+        'use_delays': 'Use Recorded Delays',
+        'click_info': 'Program performs Left/Right clicks at recorded positions',
+        'version': 'v0.4 - Added multi-language support',
+        'keyboard_shortcuts': 'Keyboard Shortcuts:\nK - Start Recording\nB - Stop Recording\nC - Play\nESC - Stop',
+        'language': 'Language:'
+    },
+    'tr': {
+        'window_title': 'Fare Kaydedici v0.3',
+        'status_ready': 'Hazır - Kaydetmek için "Tıklamaları Kaydet" butonuna basın',
+        'status_recording': 'Kayıt yapılıyor... (Durdurmak için B tuşuna basın)',
+        'status_completed': 'Kayıt tamamlandı - Oynatabilirsiniz',
+        'status_playing': 'Oynatılıyor...',
+        'status_stopped': 'Oynatma durduruldu',
+        'record_button': 'Tıklamaları Kaydet',
+        'stop_record_button': 'Kaydı Durdur (B)',
+        'play_button': 'Oynat (C)',
+        'stop_button': 'Durdur (ESC)',
+        'recorded_clicks': 'Kaydedilen Tıklamalar:',
+        'profile_operations': 'Profil İşlemleri:',
+        'profile_name': 'Profil Adı:',
+        'save': 'Kaydet',
+        'load': 'Yükle',
+        'reset': 'Sıfırla',
+        'playback_options': 'Oynatma Seçenekleri:',
+        'repeat_playback': 'Sürekli tekrarla',
+        'use_delays': 'Kaydedilen tıklama gecikmelerini kullan',
+        'click_info': 'Program kaydedilen konumlarda Sol/Sağ tıklama yapar',
+        'version': 'v0.4 - Çoklu dil desteği eklendi',
+        'keyboard_shortcuts': 'Klavye Kısayolları:\nK - Kaydı Başlat\nB - Kaydı Durdur\nC - Oynat\nESC - Durdur',
+        'language': 'Dil:'
+    }
+}
 
 # Klavye olaylarını işlemek için sinyal sınıfı
 class KeyboardSignals(QObject):
@@ -32,7 +86,7 @@ class KeyboardSignals(QObject):
 # Fare olaylarını izlemek için sınıf
 class MouseListener(QObject):
     """
-    Fare tıklamalarını dinleyen ve sinyaller yayınlayan sınıf
+    Class that listens for mouse clicks and emits signals
     """
     left_click = pyqtSignal(int, int)
     right_click = pyqtSignal(int, int)
@@ -44,7 +98,7 @@ class MouseListener(QObject):
     
     def start_listening(self):
         """
-        Fare dinlemeyi başlatır
+        Starts mouse listening
         """
         if self.is_listening:
             return
@@ -52,53 +106,53 @@ class MouseListener(QObject):
         self.is_listening = True
         self.thread = threading.Thread(target=self._listen_mouse, daemon=True)
         self.thread.start()
-        print("Fare dinleme başladı")
+        print("Mouse listening started")
     
     def stop_listening(self):
         """
-        Fare dinlemeyi durdurur
+        Stops mouse listening
         """
         self.is_listening = False
         if self.thread and self.thread.is_alive():
-            self.thread.join(1.0)  # En fazla 1 saniye bekle
-        print("Fare dinleme durduruldu")
+            self.thread.join(1.0)  # Wait at most 1 second
+        print("Mouse listening stopped")
     
     def _listen_mouse(self):
         """
-        Fare tıklamalarını dinleyen ana döngü
+        Main loop that listens for mouse clicks
         """
-        # Sol ve sağ fare tuşları durumları
+        # Left and right mouse button states
         left_button_state = False
         right_button_state = False
         
         while self.is_listening:
             try:
-                # Sol fare tuşu kontrolü
+                # Left mouse button check
                 if win32api.GetAsyncKeyState(win32con.VK_LBUTTON) < 0:
                     if not left_button_state:
                         x, y = win32api.GetCursorPos()
-                        print(f"Sol tıklama algılandı: X:{x}, Y:{y}")
+                        print(f"Left click detected: X:{x}, Y:{y}")
                         self.left_click.emit(x, y)
                         left_button_state = True
                 else:
                     left_button_state = False
                 
-                # Sağ fare tuşu kontrolü
+                # Right mouse button check
                 if win32api.GetAsyncKeyState(win32con.VK_RBUTTON) < 0:
                     if not right_button_state:
                         x, y = win32api.GetCursorPos()
-                        print(f"Sağ tıklama algılandı: X:{x}, Y:{y}")
+                        print(f"Right click detected: X:{x}, Y:{y}")
                         self.right_click.emit(x, y)
                         right_button_state = True
                 else:
                     right_button_state = False
                 
-                # Çok hızlı CPU kullanımını önlemek için kısa bekleme
+                # Short sleep to prevent high CPU usage
                 time.sleep(0.05)
                 
             except Exception as e:
-                print(f"Fare dinleme hatası: {e}")
-                time.sleep(0.5)  # Hata durumunda daha uzun bekle
+                print(f"Mouse listening error: {e}")
+                time.sleep(0.5)  # Longer sleep on error
 
 # Özel olay sınıfı
 class StatusUpdateEvent(QEvent):
@@ -111,59 +165,59 @@ class StatusUpdateEvent(QEvent):
 class AutoCloseMessageBox(QMessageBox):
     def __init__(self, *args, **kwargs):
         super(AutoCloseMessageBox, self).__init__(*args, **kwargs)
-        # 2 saniye sonra kapanacak timer oluştur
-        self.timeout = 2  # saniye
+        # Create timer to close after 2 seconds
+        self.timeout = 2  # seconds
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.close)
-        self.timer.start(self.timeout * 1000)  # ms cinsinden
+        self.timer.start(self.timeout * 1000)  # in milliseconds
         
-        # Timer'ın kalan süresini göster
-        self.countdown_label = QLabel(f"Bu mesaj {self.timeout} saniye sonra kapanacak", self)
+        # Show remaining time
+        self.countdown_label = QLabel(f"This message will close in {self.timeout} seconds", self)
         self.countdown_label.setAlignment(Qt.AlignCenter)
         self.layout().addWidget(self.countdown_label, self.layout().rowCount(), 0, 1, self.layout().columnCount())
 
 # Sağ tıklama fonksiyonu (win32api kullanarak)
 def rightclick(x, y):
     """
-    win32api kullanarak sağ tıklama yapar
+    Performs a right click using win32api
     """
     try:
-        # Fare imlecini konumlandır
+        # Position cursor
         win32api.SetCursorPos((x, y))
-        # Kısa bekleme
+        # Short delay
         time.sleep(0.05)
-        # Sağ tuşa basma olayı
+        # Right button down event
         win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, x, y, 0, 0)
-        # Basma ve bırakma arasında bekleme
+        # Delay between press and release
         time.sleep(0.1)
-        # Sağ tuşu bırakma olayı
+        # Right button up event
         win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, x, y, 0, 0)
-        print(f"Sağ tıklama yapıldı: X:{x}, Y:{y}")
+        print(f"Right click performed: X:{x}, Y:{y}")
         return True
     except Exception as e:
-        print(f"Sağ tıklama hatası: {e}")
+        print(f"Right click error: {e}")
         return False
 
 # Sol tıklama fonksiyonu (win32api kullanarak)
 def leftclick(x, y):
     """
-    win32api kullanarak sol tıklama yapar
+    Performs a left click using win32api
     """
     try:
-        # Fare imlecini konumlandır
+        # Position cursor
         win32api.SetCursorPos((x, y))
-        # Kısa bekleme
+        # Short delay
         time.sleep(0.05)
-        # Sol tuşa basma olayı
+        # Left button down event
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, x, y, 0, 0)
-        # Basma ve bırakma arasında bekleme
+        # Delay between press and release
         time.sleep(0.1)
-        # Sol tuşu bırakma olayı
+        # Left button up event
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, x, y, 0, 0)
-        print(f"Sol tıklama yapıldı: X:{x}, Y:{y}")
+        print(f"Left click performed: X:{x}, Y:{y}")
         return True
     except Exception as e:
-        print(f"Sol tıklama hatası: {e}")
+        print(f"Left click error: {e}")
         return False
 
 # Otomatik kapanan bilgi mesajı göster
@@ -179,27 +233,27 @@ def show_auto_close_warning(parent, title, message):
 # Tıklama türünü temsil eden sınıf
 class ClickAction:
     """
-    Bir fare tıklamasını temsil eden sınıf
+    Class representing a mouse click
     """
     def __init__(self, x, y, is_right_click=False, timestamp=None, delay_after=0):
         self.x = x
         self.y = y
-        self.is_right_click = is_right_click  # True=Sağ tıklama, False=Sol tıklama
+        self.is_right_click = is_right_click  # True=Right click, False=Left click
         self.timestamp = timestamp or datetime.datetime.now()
-        self.delay_after = delay_after  # Bu tıklamadan sonraki bekleme süresi (ms)
+        self.delay_after = delay_after  # Delay after this click (ms)
     
     def __str__(self):
-        click_type = "Sağ Tık" if self.is_right_click else "Sol Tık"
-        delay_info = f"Gecikme: {self.delay_after}ms" if self.delay_after > 0 else ""
+        click_type = "Right Click" if self.is_right_click else "Left Click"
+        delay_info = f"Delay: {self.delay_after}ms" if self.delay_after > 0 else ""
         return f"{click_type} - X:{self.x}, Y:{self.y} - {self.timestamp.strftime('%H:%M:%S.%f')[:-3]} {delay_info}"
 
-# INI dosyasının varsayılan konumu
+# Default location for INI file
 CONFIG_FILE = "settings.ini"
 
-# ClickAction sınıfını JSON formatına dönüştürme
+# Convert ClickAction to dictionary
 def click_action_to_dict(action):
     """
-    ClickAction nesnesini sözlük yapısına dönüştürür
+    Converts ClickAction object to dictionary
     """
     return {
         'x': action.x,
@@ -209,10 +263,10 @@ def click_action_to_dict(action):
         'delay_after': action.delay_after
     }
 
-# JSON formatından ClickAction oluşturma
+# Create ClickAction from dictionary
 def dict_to_click_action(data):
     """
-    Sözlük yapısından ClickAction nesnesi oluşturur
+    Creates ClickAction object from dictionary
     """
     return ClickAction(
         x=data['x'],
@@ -223,118 +277,109 @@ def dict_to_click_action(data):
     )
 
 class PointRecorderApp(QMainWindow):
-    """
-    Mouse tıklamalarını kaydeden ve oynatan basit uygulama
+    """ 
+    Simple application that records and plays back mouse clicks
     """
     def __init__(self):
         super().__init__()
         
-        # Uygulama durumu
-        self.click_actions = []  # ClickAction nesneleri listesi
+        # Application state
+        self.click_actions = []  # List of ClickAction objects
         self.is_recording = False
         self.is_playing = False
         self.playback_thread = None
-        self.repeat_playback = False  # Tekrarlama seçeneği
-        self.last_click_time = None   # Son tıklama zamanı
-        self.use_recorded_delays = True  # Kaydedilen gecikmeleri kullan
-        self.current_profile_name = "default"  # Varsayılan profil adı
+        self.repeat_playback = False  # Repeat option
+        self.last_click_time = None   # Last click time
+        self.use_recorded_delays = True  # Use recorded delays
+        self.current_profile_name = "default"  # Default profile name
+        self.current_language = 'en'  # Default language
         
-        # Fare dinleyici
+        # Mouse listener
         self.mouse_listener = MouseListener()
         self.mouse_listener.left_click.connect(self.on_left_click)
         self.mouse_listener.right_click.connect(self.on_right_click)
         
-        # Klavye sinyalleri
+        # Keyboard signals
         self.keyboard_signals = KeyboardSignals()
         self.keyboard_signals.key_c_pressed.connect(self.on_key_c_pressed)
         self.keyboard_signals.key_b_pressed.connect(self.on_key_b_pressed)
         self.keyboard_signals.key_k_pressed.connect(self.on_key_k_pressed)
         self.keyboard_signals.esc_pressed.connect(self.on_esc_pressed)
         
-        # Klavye olaylarını izleme için son tuş basma zamanları
+        # Keyboard event tracking last key press times
         self.last_key_c_press = 0
         self.last_key_b_press = 0
         self.last_key_k_press = 0
         self.last_esc_press = 0
         
-        # Arayüz
+        # Interface
         self.init_ui()
         
-        # Klavye izleme için timer başlat
+        # Start keyboard timer
         self.start_keyboard_timer()
         
-        # Son profili yüklemeyi dene
-        try:
-            self.load_settings()
-        except Exception as e:
-            print(f"Ayarlar yüklenirken hata oluştu: {e}")
-            # İlk kullanımda hata olmasın diye sessizce devam et
+        # Show language selection dialog
+        self.show_language_dialog()
     
     def init_ui(self):
         """
-        Kullanıcı arayüzünü oluşturur
+        Creates the user interface
         """
-        self.setWindowTitle("Fare Kaydedici v0.3")
+        self.setWindowTitle(TEXTS[self.current_language]['window_title'])
         self.setGeometry(100, 100, 550, 650)
         
-        # Ana widget ve layout
+        # Main widget and layout
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         
         self.main_layout = QVBoxLayout()
         self.central_widget.setLayout(self.main_layout)
         
-        # Durum etiketi
-        self.status_label = QLabel("Hazır - Kaydetmek için 'Tıklamaları Kaydet' butonuna basın")
+        # Status label
+        self.status_label = QLabel(TEXTS[self.current_language]['status_ready'])
         self.status_label.setAlignment(Qt.AlignCenter)
         self.main_layout.addWidget(self.status_label)
         
-        # Koordinat bilgisi
-        self.coordinates_label = QLabel("Kaydedilen tıklama sayısı: 0")
+        # Coordinate information
+        self.coordinates_label = QLabel("Recorded clicks: 0")
         self.coordinates_label.setAlignment(Qt.AlignCenter)
         self.main_layout.addWidget(self.coordinates_label)
         
-        # Profil bilgisi
-        self.profile_label = QLabel(f"Aktif Profil: {self.current_profile_name}")
+        # Profile information
+        self.profile_label = QLabel(f"Active Profile: {self.current_profile_name}")
         self.profile_label.setAlignment(Qt.AlignCenter)
         font = self.profile_label.font()
         font.setBold(True)
         self.profile_label.setFont(font)
         self.main_layout.addWidget(self.profile_label)
         
-        # Kısayol açıklaması
-        keyboard_shortcuts_label = QLabel(
-            "Klavye Kısayolları:\n"
-            "K - Kaydı Başlat\n"
-            "B - Kaydı Durdur\n"
-            "C - Oynat\n"
-            "ESC - Durdur"
-        )
-        keyboard_shortcuts_label.setStyleSheet("color: #666; font-size: 10px;")
-        self.main_layout.addWidget(keyboard_shortcuts_label)
+        # Keyboard shortcuts description
+        self.keyboard_shortcuts_label = QLabel(TEXTS[self.current_language]['keyboard_shortcuts'])
+        self.keyboard_shortcuts_label.setStyleSheet("color: #666; font-size: 10px;")
+        self.main_layout.addWidget(self.keyboard_shortcuts_label)
         
-        # Bir boşluk ekle
+        # Add spacing
         self.main_layout.addSpacing(10)
         
-        # Kayıt butonları
+        # Record buttons
         self.record_layout = QHBoxLayout()
         
-        # Kayıt başlat butonu
-        self.record_button = QPushButton("Tıklamaları Kaydet")
+        # Start recording button
+        self.record_button = QPushButton(TEXTS[self.current_language]['record_button'])
         self.record_button.setMinimumHeight(40)
         self.record_button.clicked.connect(self.start_recording)
         self.record_layout.addWidget(self.record_button)
         
-        # Kayıt durdurma butonu
-        self.stop_record_button = QPushButton("Kaydı Durdur (B)")
+        # Stop recording button
+        self.stop_record_button = QPushButton(TEXTS[self.current_language]['stop_record_button'])
         self.stop_record_button.setMinimumHeight(40)
         self.stop_record_button.clicked.connect(self.stop_recording)
         self.record_layout.addWidget(self.stop_record_button)
         
         self.main_layout.addLayout(self.record_layout)
         
-        # Tıklama listesi
-        self.click_list_label = QLabel("Kaydedilen Tıklamalar:")
+        # Click list
+        self.click_list_label = QLabel(TEXTS[self.current_language]['recorded_clicks'])
         self.click_list_label.setAlignment(Qt.AlignLeft)
         self.main_layout.addWidget(self.click_list_label)
         
@@ -342,205 +387,205 @@ class PointRecorderApp(QMainWindow):
         self.click_list.setMinimumHeight(150)
         self.main_layout.addWidget(self.click_list)
         
-        # Bir boşluk ekle
+        # Add spacing
         self.main_layout.addSpacing(10)
         
-        # Dosya İşlemleri Grubu
-        self.file_group_label = QLabel("Profil İşlemleri:")
+        # File Operations Group
+        self.file_group_label = QLabel(TEXTS[self.current_language]['profile_operations'])
         self.file_group_label.setAlignment(Qt.AlignLeft)
         self.main_layout.addWidget(self.file_group_label)
         
-        # Profil adı giriş alanı
+        # Profile name input
         self.profile_layout = QHBoxLayout()
-        self.profile_name_label = QLabel("Profil Adı:")
+        self.profile_name_label = QLabel(TEXTS[self.current_language]['profile_name'])
         self.profile_name_input = QLineEdit(self.current_profile_name)
         self.profile_layout.addWidget(self.profile_name_label)
         self.profile_layout.addWidget(self.profile_name_input)
         self.main_layout.addLayout(self.profile_layout)
         
-        # Dosya işlem butonları
+        # File operation buttons
         self.file_buttons_layout = QHBoxLayout()
         
-        # Kaydet butonu
-        self.save_button = QPushButton("Kaydet")
+        # Save button
+        self.save_button = QPushButton(TEXTS[self.current_language]['save'])
         self.save_button.clicked.connect(self.save_profile)
         self.file_buttons_layout.addWidget(self.save_button)
         
-        # Yükle butonu
-        self.load_button = QPushButton("Yükle")
+        # Load button
+        self.load_button = QPushButton(TEXTS[self.current_language]['load'])
         self.load_button.clicked.connect(self.load_profile)
         self.file_buttons_layout.addWidget(self.load_button)
         
-        # Sıfırla butonu
-        self.reset_button = QPushButton("Sıfırla")
+        # Reset button
+        self.reset_button = QPushButton(TEXTS[self.current_language]['reset'])
         self.reset_button.clicked.connect(self.reset_recording)
         self.file_buttons_layout.addWidget(self.reset_button)
         
         self.main_layout.addLayout(self.file_buttons_layout)
         
-        # Bir boşluk ekle
+        # Add spacing
         self.main_layout.addSpacing(10)
         
-        # Oynatma Seçenekleri grubu
-        self.options_label = QLabel("Oynatma Seçenekleri:")
+        # Playback Options group
+        self.options_label = QLabel(TEXTS[self.current_language]['playback_options'])
         self.options_label.setAlignment(Qt.AlignLeft)
         self.main_layout.addWidget(self.options_label)
         
-        # Seçenek düzeni
+        # Options layout
         self.options_layout = QVBoxLayout()
         
-        # Tekrar seçeneği
-        self.repeat_checkbox = QCheckBox("Sürekli tekrarla")
+        # Repeat option
+        self.repeat_checkbox = QCheckBox(TEXTS[self.current_language]['repeat_playback'])
         self.repeat_checkbox.setChecked(False)
         self.repeat_checkbox.stateChanged.connect(self.toggle_repeat)
         self.options_layout.addWidget(self.repeat_checkbox)
         
-        # Kaydedilen gecikmeleri kullanma seçeneği
-        self.use_delays_checkbox = QCheckBox("Kaydedilen tıklama gecikmelerini kullan")
+        # Use recorded delays option
+        self.use_delays_checkbox = QCheckBox(TEXTS[self.current_language]['use_delays'])
         self.use_delays_checkbox.setChecked(True)
         self.use_delays_checkbox.stateChanged.connect(self.toggle_use_delays)
         self.options_layout.addWidget(self.use_delays_checkbox)
         
         self.main_layout.addLayout(self.options_layout)
         
-        # Bir boşluk ekle
+        # Add spacing
         self.main_layout.addSpacing(10)
         
-        # Oynatma butonları
+        # Playback buttons
         self.buttons_layout = QHBoxLayout()
         
-        # Oynat butonu
-        self.play_button = QPushButton("Oynat (C)")
+        # Play button
+        self.play_button = QPushButton(TEXTS[self.current_language]['play_button'])
         self.play_button.setMinimumHeight(40)
         self.play_button.clicked.connect(self.start_playback)
         self.buttons_layout.addWidget(self.play_button)
         
-        # Durdur butonu
-        self.stop_button = QPushButton("Durdur (ESC)")
+        # Stop button
+        self.stop_button = QPushButton(TEXTS[self.current_language]['stop_button'])
         self.stop_button.setMinimumHeight(40)
         self.stop_button.clicked.connect(self.stop_playback)
         self.buttons_layout.addWidget(self.stop_button)
         
         self.main_layout.addLayout(self.buttons_layout)
         
-        # Tıklama açıklaması
-        self.click_label = QLabel("Program kaydedilen konumlarda Sol/Sağ tıklama yapar")
+        # Click description
+        self.click_label = QLabel(TEXTS[self.current_language]['click_info'])
         self.click_label.setAlignment(Qt.AlignCenter)
         font = self.click_label.font()
         font.setBold(True)
         self.click_label.setFont(font)
         self.main_layout.addWidget(self.click_label)
         
-        # Versiyon bilgisi
-        self.version_label = QLabel("v0.3 - Profil kaydetme ve yükleme özelliği eklendi")
+        # Version information
+        self.version_label = QLabel(TEXTS[self.current_language]['version'])
         self.version_label.setAlignment(Qt.AlignRight)
         self.main_layout.addWidget(self.version_label)
     
     def toggle_repeat(self, state):
         """
-        Tekrarlama seçeneğini açıp kapatır
+        Toggles repeat playback option
         """
         self.repeat_playback = state == Qt.Checked
-        print(f"Tekrarlama {'açık' if self.repeat_playback else 'kapalı'}")
+        print(f"Repeat playback {'enabled' if self.repeat_playback else 'disabled'}")
     
     def start_keyboard_timer(self):
         """
-        Klavye tuşlarını kontrol etmek için timer başlatır
+        Starts timer for keyboard monitoring
         """
         self.keyboard_timer = QTimer(self)
         self.keyboard_timer.timeout.connect(self.check_keyboard)
-        self.keyboard_timer.start(100)  # 100ms aralıklarla kontrol et
+        self.keyboard_timer.start(100)  # Check every 100ms
     
     def check_keyboard(self):
         """
-        Klavye tuşlarını kontrol eder ve sinyalleri yayınlar
+        Checks keyboard keys and emits signals
         """
         try:
             current_time = time.time()
             
-            # B tuşu kontrolü (Kaydı Durdur)
+            # B key check (Stop Recording)
             if keyboard.is_pressed('b'):
                 if current_time - self.last_key_b_press > 0.5:
                     self.last_key_b_press = current_time
                     self.keyboard_signals.key_b_pressed.emit()
             
-            # C tuşu kontrolü (Oynat)
+            # C key check (Play)
             if keyboard.is_pressed('c'):
                 if current_time - self.last_key_c_press > 0.5:
                     self.last_key_c_press = current_time
                     self.keyboard_signals.key_c_pressed.emit()
             
-            # K tuşu kontrolü (Kaydı Başlat)
+            # K key check (Start Recording)
             if keyboard.is_pressed('k'):
                 if current_time - self.last_key_k_press > 0.5:
                     self.last_key_k_press = current_time
                     self.keyboard_signals.key_k_pressed.emit()
             
-            # ESC tuşu kontrolü (Durdur)
+            # ESC key check (Stop)
             if keyboard.is_pressed('esc'):
                 if current_time - self.last_esc_press > 0.5:
                     self.last_esc_press = current_time
                     self.keyboard_signals.esc_pressed.emit()
         
         except Exception as e:
-            print(f"Klavye kontrol hatası: {e}")
+            print(f"Keyboard check error: {e}")
     
     def on_left_click(self, x, y):
         """
-        Sol tıklama yakalandığında çağrılır
+        Called when left click is detected
         """
         if self.is_recording:
-            # Zaman damgası oluştur
+            # Create timestamp
             current_time = datetime.datetime.now()
             
-            # Eğer daha önce bir tıklama varsa, aradaki gecikmeyi hesapla
+            # Calculate delay if there was a previous click
             delay_after = 0
             if self.last_click_time:
                 delay_after = int((current_time - self.last_click_time).total_seconds() * 1000)
             
-            # Son tıklama zamanını güncelle
+            # Update last click time
             self.last_click_time = current_time
             
-            # Eğer bu ilk tıklama değilse, önceki tıklamanın gecikme süresini ayarla
+            # If this is not the first click, set the delay for the previous click
             if len(self.click_actions) > 0:
                 self.click_actions[-1].delay_after = delay_after
-                # Liste görünümünü güncelle
+                # Update list view
                 self.update_click_list()
             
-            # Yeni tıklamayı kaydet
+            # Save new click
             click_action = ClickAction(x, y, is_right_click=False, timestamp=current_time)
             self.click_actions.append(click_action)
-            print(f"Sol tıklama kaydedildi: X:{x}, Y:{y}, Önceki tıklamadan gecikme: {delay_after}ms")
+            print(f"Left click recorded: X:{x}, Y:{y}, Delay from previous: {delay_after}ms")
             
             self.update_click_list()
             self.update_status()
     
     def on_right_click(self, x, y):
         """
-        Sağ tıklama yakalandığında çağrılır
+        Called when right click is detected
         """
         if self.is_recording:
-            # Zaman damgası oluştur
+            # Create timestamp
             current_time = datetime.datetime.now()
             
-            # Eğer daha önce bir tıklama varsa, aradaki gecikmeyi hesapla
+            # Calculate delay if there was a previous click
             delay_after = 0
             if self.last_click_time:
                 delay_after = int((current_time - self.last_click_time).total_seconds() * 1000)
             
-            # Son tıklama zamanını güncelle
+            # Update last click time
             self.last_click_time = current_time
             
-            # Eğer bu ilk tıklama değilse, önceki tıklamanın gecikme süresini ayarla
+            # If this is not the first click, set the delay for the previous click
             if len(self.click_actions) > 0:
                 self.click_actions[-1].delay_after = delay_after
-                # Liste görünümünü güncelle
+                # Update list view
                 self.update_click_list()
             
-            # Yeni tıklamayı kaydet
+            # Save new click
             click_action = ClickAction(x, y, is_right_click=True, timestamp=current_time)
             self.click_actions.append(click_action)
-            print(f"Sağ tıklama kaydedildi: X:{x}, Y:{y}, Önceki tıklamadan gecikme: {delay_after}ms")
+            print(f"Right click recorded: X:{x}, Y:{y}, Delay from previous: {delay_after}ms")
             
             self.update_click_list()
             self.update_status()
@@ -548,98 +593,98 @@ class PointRecorderApp(QMainWindow):
     @pyqtSlot()
     def on_key_c_pressed(self):
         """
-        C tuşuna basılınca çağrılır - Oynatma başlatır
+        Called when C key is pressed - Starts playback
         """
-        print("C tuşuna basıldı, oynatma başlatılıyor")
+        print("C key pressed, starting playback")
         self.start_playback()
     
     @pyqtSlot()
     def on_key_b_pressed(self):
         """
-        B tuşuna basılınca çağrılır - Kaydı durdurur
+        Called when B key is pressed - Stops recording
         """
-        print("B tuşuna basıldı, kayıt durduruluyor")
+        print("B key pressed, stopping recording")
         self.stop_recording()
     
     @pyqtSlot()
     def on_key_k_pressed(self):
         """
-        K tuşuna basılınca çağrılır - Kaydı başlatır
+        Called when K key is pressed - Starts recording
         """
-        print("K tuşuna basıldı, kayıt başlatılıyor")
+        print("K key pressed, starting recording")
         self.start_recording()
     
     @pyqtSlot()
     def on_esc_pressed(self):
         """
-        ESC tuşuna basılınca çağrılır - Oynatma veya kaydı durdurur
+        Called when ESC key is pressed - Stops playback or recording
         """
         if self.is_playing:
-            print("ESC tuşuna basıldı, oynatma durduruldu")
+            print("ESC key pressed, stopping playback")
             self.stop_playback()
         elif self.is_recording:
-            print("ESC tuşuna basıldı, kayıt durduruldu")
+            print("ESC key pressed, stopping recording")
             self.stop_recording()
     
     def start_recording(self):
         """
-        Fare tıklamalarını kaydetmeye başlar
+        Starts recording mouse clicks
         """
         if self.is_recording or self.is_playing:
             return
         
-        # Kayıt modunu başlat
+        # Start recording mode
         self.is_recording = True
-        self.last_click_time = None  # Son tıklama zamanını sıfırla
-        self.status_label.setText("Kayıt yapılıyor... (Durdurmak için 'B' tuşuna basın)")
+        self.last_click_time = None  # Reset last click time
+        self.status_label.setText(TEXTS[self.current_language]['status_recording'])
         
-        # Buton durumlarını güncelle
+        # Update button states
         self.record_button.setEnabled(False)
         self.stop_record_button.setEnabled(True)
         self.play_button.setEnabled(False)
         
-        # Fare dinleme başlat
+        # Start mouse listening
         self.mouse_listener.start_listening()
         
-        # Kullanıcıya bilgilendirme mesajı
-        show_auto_close_info(self, "Kayıt Başladı", 
-                           "Fare tıklamaları kaydediliyor...\n\n"
-                           "Her sağ ve sol tıklama ve tıklamalar arasındaki gecikmeler kaydedilecek.\n\n"
-                           "Kayıt durdurmak için 'B' tuşuna basın veya 'Kaydı Durdur' düğmesine tıklayın.")
+        # Show info message to user
+        show_auto_close_info(self, "Recording Started", 
+                           "Mouse clicks are being recorded...\n\n"
+                           "All left and right clicks and delays between them will be recorded.\n\n"
+                           "Press 'B' or click 'Stop Recording' to finish.")
     
     def stop_recording(self):
         """
-        Fare tıklamalarını kaydetmeyi durdurur
+        Stops recording mouse clicks
         """
         if not self.is_recording:
             return
             
-        # Kayıt modunu durdur
+        # Stop recording mode
         self.is_recording = False
-        self.last_click_time = None  # Son tıklama zamanını sıfırla
-        self.status_label.setText("Kayıt tamamlandı - Oynat'a basabilirsiniz")
+        self.last_click_time = None  # Reset last click time
+        self.status_label.setText(TEXTS[self.current_language]['status_completed'])
         
-        # Fare dinleme durdur
+        # Stop mouse listening
         self.mouse_listener.stop_listening()
         
-        # Kullanıcıya bilgilendirme mesajı
+        # Show info message to user
         if len(self.click_actions) > 0:
-            # Son tıklamanın gecikme bilgisini gösterme
+            # Don't show delay info for last click
             if len(self.click_actions) > 0:
                 self.click_actions[-1].delay_after = 0
                 self.update_click_list()
                 
-            show_auto_close_info(self, "Kayıt Tamamlandı", 
-                               f"Toplam {len(self.click_actions)} tıklama ve aralarındaki gecikmeler kaydedildi.\n\n"
-                               "Oynatmak için 'C' tuşuna basın veya 'Oynat' düğmesine tıklayın.")
+            show_auto_close_info(self, "Recording Completed", 
+                               f"Total {len(self.click_actions)} clicks and delays recorded.\n\n"
+                               "Press 'C' or click 'Play' to start playback.")
         else:
-            show_auto_close_warning(self, "Uyarı", 
-                                  "Hiç tıklama kaydedilmedi!\n\n"
-                                  "Tekrar kaydetmeyi deneyin.")
+            show_auto_close_warning(self, "Warning", 
+                                  "No clicks recorded!\n\n"
+                                  "Please try recording again.")
     
     def update_click_list(self):
         """
-        Tıklama listesini günceller
+        Updates the click list view
         """
         self.click_list.clear()
         for i, action in enumerate(self.click_actions):
@@ -647,17 +692,17 @@ class PointRecorderApp(QMainWindow):
     
     def update_status(self):
         """
-        Arayüz durumunu günceller
+        Updates the interface status
         """
-        self.coordinates_label.setText(f"Kaydedilen tıklama sayısı: {len(self.click_actions)}")
+        self.coordinates_label.setText(f"Recorded clicks: {len(self.click_actions)}")
     
     def start_playback(self):
         """
-        Kaydedilen tıklamaları oynatmaya başlar
+        Starts playing back recorded clicks
         """
-        # Geçerli tıklama kontrolü
+        # Check for valid clicks
         if len(self.click_actions) == 0:
-            show_auto_close_warning(self, "Uyarı", "Oynatmak için önce tıklama kaydetmelisiniz!")
+            show_auto_close_warning(self, "Warning", "You need to record clicks before playing!")
             return
         
         if self.is_playing or self.is_recording:
@@ -665,27 +710,27 @@ class PointRecorderApp(QMainWindow):
         
         self.is_playing = True
         
-        delay_info = "gerçek gecikmelerle" if self.use_recorded_delays else "sabit gecikmeli"
-        tekrar_metni = "tekrarlı" if self.repeat_playback else "bir kez"
-        self.status_label.setText(f"Oynatılıyor... ({tekrar_metni}, {delay_info})")
+        delay_info = "with real delays" if self.use_recorded_delays else "with fixed delay"
+        repeat_text = "repeating" if self.repeat_playback else "once"
+        self.status_label.setText(f"Playing... ({repeat_text}, {delay_info})")
         
-        # Kullanıcıya bilgilendirme mesajı (otomatik kapanan)
-        show_auto_close_info(self, "Oynatma Başladı", 
-                           f"{len(self.click_actions)} tıklama sırayla yapılacak.\n\n"
-                           f"Oynatma modu: {'Tekrarlı' if self.repeat_playback else 'Tek sefer'}\n\n"
-                           f"Gecikmeler: {'Kaydedilen orijinal gecikmeler' if self.use_recorded_delays else 'Sabit 250ms'}\n\n"
-                           "Durdurmak için 'Durdur' düğmesine veya ESC tuşuna basın.")
+        # Show info message to user (auto-closing)
+        show_auto_close_info(self, "Playback Started", 
+                           f"{len(self.click_actions)} clicks will be performed in sequence.\n\n"
+                           f"Playback mode: {'Repeating' if self.repeat_playback else 'Single play'}\n\n"
+                           f"Delays: {'Using original recorded delays' if self.use_recorded_delays else 'Fixed 250ms'}\n\n"
+                           "Press 'Stop' button or ESC key to stop.")
         
-        # Oynatma thread'ini başlat
+        # Start playback thread
         self.playback_thread = threading.Thread(target=self.play_actions, daemon=True)
         self.playback_thread.start()
     
     def play_actions(self):
         """
-        Kaydedilen tıklamaları oynatır
+        Plays back recorded clicks
         """
         try:
-            # Tekrarlı veya tek seferlik oynatma
+            # Repeat or single play
             do_repeat = self.repeat_playback
             
             while self.is_playing:
@@ -694,82 +739,82 @@ class PointRecorderApp(QMainWindow):
                         break
                     
                     try:
-                        print(f"Tıklama {i+1} yapılıyor: {'Sağ' if action.is_right_click else 'Sol'} tıklama ({action.x}, {action.y})")
+                        print(f"Performing click {i+1}: {'Right' if action.is_right_click else 'Left'} click ({action.x}, {action.y})")
                         
-                        # Tıklama tipine göre fonksiyon seç
+                        # Select function based on click type
                         if action.is_right_click:
                             success = rightclick(action.x, action.y)
                         else:
                             success = leftclick(action.x, action.y)
                         
                         if not success:
-                            print(f"Tıklama {i+1} başarısız oldu")
+                            print(f"Click {i+1} failed")
                         
-                        # İşlemler arası bekleme - ya kaydedilen gecikme ya da sabit değer
+                        # Wait between actions - either recorded delay or fixed value
                         if self.use_recorded_delays and i < len(self.click_actions) - 1:
                             delay = action.delay_after
                             if delay > 0:
-                                print(f"Kaydedilen gecikme: {delay}ms bekleniyor")
-                                time.sleep(delay / 1000.0)  # ms'yi saniyeye çevir
+                                print(f"Waiting for recorded delay: {delay}ms")
+                                time.sleep(delay / 1000.0)  # Convert ms to seconds
                             else:
-                                # Eğer gecikme 0 ise minimum bekleme yap
+                                # If delay is 0, use minimum wait
                                 time.sleep(0.05)
                         else:
-                            # Sabit gecikme kullan
+                            # Use fixed delay
                             time.sleep(0.25)  # 250ms
                     except Exception as e:
-                        print(f"Tıklama {i+1} hatası: {e}")
+                        print(f"Click {i+1} error: {e}")
                 
-                # Tekrarlama seçeneği kontrol edilir
+                # Check repeat option
                 if not do_repeat:
-                    print("Tek seferlik oynatma tamamlandı")
+                    print("Single play completed")
                     self.is_playing = False
-                    # Ana thread'de durum güncelleme
+                    # Update status in main thread
                     try:
                         QApplication.instance().postEvent(self, StatusUpdateEvent())
                     except Exception as e:
-                        print(f"Durum güncelleme hatası: {e}")
+                        print(f"Status update error: {e}")
                     break
                 
-                # Tekrarlama durumunda bir sonraki döngüye geçmeden önce biraz bekle
+                # Wait before next cycle in repeat mode
                 time.sleep(0.5)
                 
         except Exception as e:
-            print(f"Oynatma hatası: {e}")
+            print(f"Playback error: {e}")
             self.is_playing = False
     
     # Olay işleme (Event processing)
     def event(self, event):
         """
-        Özel olay işleme
+        Custom event handling
         """
         if event.type() == StatusUpdateEvent.EVENT_TYPE:
-            self.status_label.setText("Oynatma tamamlandı")
+            self.status_label.setText(TEXTS[self.current_language]['status_completed'])
             return True
         return super().event(event)
     
     def stop_playback(self):
         """
-        Oynatma işlemini durdurur
+        Stops playback
         """
         if self.is_playing:
             self.is_playing = False
-            self.status_label.setText("Oynatma durduruldu")
-            print("Tıklama işlemi durduruldu")
+            self.status_label.setText(TEXTS[self.current_language]['status_stopped'])
+            print("Click playback stopped")
     
     def reset_recording(self):
         """
-        Kaydedilen tıklamaları temizler
+        Clears recorded clicks
         """
         if self.is_recording or self.is_playing:
-            show_auto_close_warning(self, "Uyarı", "Kayıt veya oynatma devam ederken sıfırlama yapılamaz!")
+            show_auto_close_warning(self, "Warning", "Cannot reset while recording or playing!")
             return
             
         if not self.click_actions:
-            return  # Zaten boşsa bir şey yapma
+            return  # Already empty
             
-        result = QMessageBox.question(self, "Sıfırlama Onayı", 
-                                     "Tüm tıklama kayıtları silinecek. Emin misiniz?",
+        result = QMessageBox.question(self, "Reset Confirmation", 
+                                     "All click recordings will be deleted. Are you sure?",
                                      QMessageBox.Yes | QMessageBox.No)
         if result == QMessageBox.No:
             return
@@ -780,203 +825,266 @@ class PointRecorderApp(QMainWindow):
         self.update_click_list()
         self.update_status()
         
-        self.status_label.setText("Tüm tıklama kayıtları silindi")
-        show_auto_close_info(self, "Sıfırlama Tamamlandı", "Tüm tıklama kayıtları silindi.")
+        self.status_label.setText("All click recordings cleared")
+        show_auto_close_info(self, "Reset Completed", "All click recordings have been cleared.")
 
     def toggle_use_delays(self, state):
         """
-        Kaydedilen gecikmeleri kullanma seçeneğini açıp kapatır
+        Toggles use of recorded delays
         """
         self.use_recorded_delays = state == Qt.Checked
-        print(f"Kaydedilen gecikmeler {'kullanılacak' if self.use_recorded_delays else 'kullanılmayacak'}")
+        print(f"Using recorded delays: {'enabled' if self.use_recorded_delays else 'disabled'}")
 
     def save_settings(self, profile_name=None):
         """
-        Tıklama verilerini ve ayarları INI dosyasına kaydeder
+        Saves click data and settings to INI file
         """
         try:
             config = configparser.ConfigParser()
             
-            # Mevcut INI dosyasını oku (varsa)
+            # Read existing INI file if it exists
             if os.path.exists(CONFIG_FILE):
                 config.read(CONFIG_FILE)
                 
-            # Profil adını ayarla
+            # Set profile name
             if profile_name:
                 self.current_profile_name = profile_name
                 
-            # Genel ayarlar bölümü
+            # General settings section
             if 'Settings' not in config:
                 config['Settings'] = {}
                 
-            # Son kullanılan profil adını kaydet
+            # Save last used profile name
             config['Settings']['last_profile'] = self.current_profile_name
             
-            # Profil bölümü
+            # Profile section
             section_name = f"Profile_{self.current_profile_name}"
             if section_name not in config:
                 config[section_name] = {}
                 
-            # Tıklama verilerini JSON formatına dönüştür
+            # Convert click data to JSON format
             click_data = [click_action_to_dict(action) for action in self.click_actions]
             config[section_name]['click_data'] = json.dumps(click_data)
             
-            # Tekrar ayarını kaydet
+            # Save repeat setting
             config[section_name]['repeat'] = str(int(self.repeat_playback))
             
-            # Gecikme kullanım ayarını kaydet
+            # Save delay usage setting
             config[section_name]['use_delays'] = str(int(self.use_recorded_delays))
             
-            # Dosyaya kaydet
+            # Save to file
             with open(CONFIG_FILE, 'w') as configfile:
                 config.write(configfile)
                 
-            print(f"Ayarlar '{CONFIG_FILE}' dosyasına kaydedildi. Profil: {self.current_profile_name}")
+            print(f"Settings saved to '{CONFIG_FILE}'. Profile: {self.current_profile_name}")
             return True
             
         except Exception as e:
-            print(f"Ayarlar kaydedilirken hata oluştu: {e}")
-            show_auto_close_warning(self, "Hata", f"Ayarlar kaydedilemedi: {e}")
+            print(f"Error saving settings: {e}")
+            show_auto_close_warning(self, "Error", f"Could not save settings: {e}")
             return False
-    
+
     def load_settings(self, profile_name=None):
         """
-        INI dosyasından tıklama verilerini ve ayarları yükler
+        Loads click data and settings from INI file
         """
         try:
             if not os.path.exists(CONFIG_FILE):
-                print(f"'{CONFIG_FILE}' dosyası bulunamadı.")
+                print(f"'{CONFIG_FILE}' file not found.")
                 return False
                 
             config = configparser.ConfigParser()
             config.read(CONFIG_FILE)
             
-            # Profil adını belirle
+            # Determine profile name
             if profile_name is None:
-                # Eğer profil adı belirtilmemişse, son kullanılan profili kullan
+                # If no profile name specified, use last used profile
                 if 'Settings' in config and 'last_profile' in config['Settings']:
                     profile_name = config['Settings']['last_profile']
                 else:
                     profile_name = "default"
             
-            # Profil bölümünü kontrol et
+            # Check profile section
             section_name = f"Profile_{profile_name}"
             if section_name not in config:
-                print(f"'{profile_name}' profili bulunamadı.")
+                print(f"'{profile_name}' profile not found.")
                 return False
                 
-            # Profil adını ayarla
+            # Set profile name
             self.current_profile_name = profile_name
             
-            # Tıklama verilerini yükle
+            # Load click data
             if 'click_data' in config[section_name]:
                 click_data = json.loads(config[section_name]['click_data'])
                 
-                # Önceki tıklama verilerini temizle
+                # Clear previous click data
                 self.click_actions = []
                 
-                # Tıklama verilerini nesnelere dönüştür
+                # Convert click data to objects
                 for data in click_data:
                     self.click_actions.append(dict_to_click_action(data))
                 
-                # Liste görünümünü güncelle
+                # Update list view
                 self.update_click_list()
                 self.update_status()
             
-            # Tekrar ayarını yükle
+            # Load repeat setting
             if 'repeat' in config[section_name]:
                 self.repeat_playback = bool(int(config[section_name]['repeat']))
                 self.repeat_checkbox.setChecked(self.repeat_playback)
             
-            # Gecikme kullanım ayarını yükle
+            # Load delay usage setting
             if 'use_delays' in config[section_name]:
                 self.use_recorded_delays = bool(int(config[section_name]['use_delays']))
                 self.use_delays_checkbox.setChecked(self.use_recorded_delays)
                 
-            print(f"'{profile_name}' profili başarıyla yüklendi.")
+            print(f"'{profile_name}' profile loaded successfully.")
             
-            # Kullanıcıya bildir
-            tiklama_sayisi = len(self.click_actions)
-            if tiklama_sayisi > 0:
-                self.status_label.setText(f"'{profile_name}' profili yüklendi - {tiklama_sayisi} tıklama")
-                show_auto_close_info(self, "Profil Yüklendi", 
-                                  f"'{profile_name}' profili başarıyla yüklendi.\n\n"
-                                  f"Toplam {tiklama_sayisi} tıklama yüklendi.")
+            # Notify user
+            click_count = len(self.click_actions)
+            if click_count > 0:
+                self.status_label.setText(f"'{profile_name}' profile loaded - {click_count} clicks")
+                show_auto_close_info(self, "Profile Loaded", 
+                                  f"'{profile_name}' profile loaded successfully.\n\n"
+                                  f"Total {click_count} clicks loaded.")
             else:
-                self.status_label.setText(f"'{profile_name}' profili yüklendi (boş)")
+                self.status_label.setText(f"'{profile_name}' profile loaded (empty)")
                 
             return True
             
         except Exception as e:
-            print(f"Ayarlar yüklenirken hata oluştu: {e}")
-            show_auto_close_warning(self, "Hata", f"Ayarlar yüklenemedi: {e}")
+            print(f"Error loading settings: {e}")
+            show_auto_close_warning(self, "Error", f"Could not load settings: {e}")
             return False
 
     def save_profile(self):
         """
-        Tıklama verilerini ve ayarları bir profile kaydeder
+        Saves click data and settings to a profile
         """
         profile_name = self.profile_name_input.text().strip()
         
-        # Profil adını kontrol et
+        # Check profile name
         if not profile_name:
-            show_auto_close_warning(self, "Uyarı", "Lütfen geçerli bir profil adı girin.")
+            show_auto_close_warning(self, "Warning", "Please enter a valid profile name.")
             return
             
-        # Veri kontrolü
+        # Check data
         if not self.click_actions:
-            result = QMessageBox.question(self, "Boş Profil", 
-                                         "Hiç tıklama kaydedilmemiş. Boş profil kaydetmek istiyor musunuz?",
+            result = QMessageBox.question(self, "Empty Profile", 
+                                         "No clicks recorded. Save empty profile?",
                                          QMessageBox.Yes | QMessageBox.No)
             if result == QMessageBox.No:
                 return
         
-        # Ayarları kaydet
+        # Save settings
         if self.save_settings(profile_name):
-            # Profil etiketini güncelle
+            # Update profile label
             self.current_profile_name = profile_name
-            self.profile_label.setText(f"Aktif Profil: {self.current_profile_name}")
+            self.profile_label.setText(f"Active Profile: {self.current_profile_name}")
             
-            # Kullanıcıya bildir
-            self.status_label.setText(f"'{profile_name}' profili kaydedildi")
-            show_auto_close_info(self, "Kayıt Başarılı", 
-                              f"'{profile_name}' profili başarıyla kaydedildi.\n\n"
-                              f"Toplam {len(self.click_actions)} tıklama kaydedildi.")
+            # Notify user
+            self.status_label.setText(f"'{profile_name}' profile saved")
+            show_auto_close_info(self, "Save Successful", 
+                              f"'{profile_name}' profile saved successfully.\n\n"
+                              f"Total {len(self.click_actions)} clicks saved.")
     
     def load_profile(self):
         """
-        Belirtilen profilden tıklama verilerini ve ayarları yükler
+        Loads click data and settings from specified profile
         """
         profile_name = self.profile_name_input.text().strip()
         
-        # Profil adını kontrol et
+        # Check profile name
         if not profile_name:
-            show_auto_close_warning(self, "Uyarı", "Lütfen geçerli bir profil adı girin.")
+            show_auto_close_warning(self, "Warning", "Please enter a valid profile name.")
             return
             
-        # Mevcut veriler varsa sorma
+        # Ask if current data exists
         if self.click_actions:
-            result = QMessageBox.question(self, "Mevcut Veriler", 
-                                         "Mevcut tıklamalar silinecek. Devam etmek istiyor musunuz?",
+            result = QMessageBox.question(self, "Current Data", 
+                                         "Current clicks will be deleted. Continue?",
                                          QMessageBox.Yes | QMessageBox.No)
             if result == QMessageBox.No:
                 return
         
-        # Profili yükle
+        # Load profile
         if self.load_settings(profile_name):
-            # Profil etiketini güncelle
-            self.profile_label.setText(f"Aktif Profil: {self.current_profile_name}")
+            # Update profile label
+            self.profile_label.setText(f"Active Profile: {self.current_profile_name}")
         else:
-            # Yükleme başarısızsa kullanıcıya bildir
-            show_auto_close_warning(self, "Yükleme Hatası", 
-                                 f"'{profile_name}' profili yüklenemedi veya bulunamadı.")
+            # Notify user if loading failed
+            show_auto_close_warning(self, "Load Error", 
+                                 f"Could not load '{profile_name}' profile or profile not found.")
             
-# Ana uygulama
+    def show_language_dialog(self):
+        """
+        Shows language selection dialog
+        """
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle("Language Selection / Dil Seçimi")
+        dialog.setText("Please select your language / Lütfen dilinizi seçin")
+        
+        # Create buttons
+        en_button = dialog.addButton("English", QMessageBox.ActionRole)
+        tr_button = dialog.addButton("Türkçe", QMessageBox.ActionRole)
+        
+        dialog.exec_()
+        
+        # Set language based on button clicked
+        if dialog.clickedButton() == en_button:
+            self.current_language = 'en'
+        else:
+            self.current_language = 'tr'
+            
+        # Update UI with selected language
+        self.update_language()
+
+    def update_language(self):
+        """
+        Updates all UI elements with current language
+        """
+        texts = TEXTS[self.current_language]
+        
+        # Update window title
+        self.setWindowTitle(texts['window_title'])
+        
+        # Update status label
+        self.status_label.setText(texts['status_ready'])
+        
+        # Update buttons
+        self.record_button.setText(texts['record_button'])
+        self.stop_record_button.setText(texts['stop_record_button'])
+        self.play_button.setText(texts['play_button'])
+        self.stop_button.setText(texts['stop_button'])
+        
+        # Update labels
+        self.click_list_label.setText(texts['recorded_clicks'])
+        self.file_group_label.setText(texts['profile_operations'])
+        self.profile_name_label.setText(texts['profile_name'])
+        self.options_label.setText(texts['playback_options'])
+        self.click_label.setText(texts['click_info'])
+        self.version_label.setText(texts['version'])
+        
+        # Update buttons
+        self.save_button.setText(texts['save'])
+        self.load_button.setText(texts['load'])
+        self.reset_button.setText(texts['reset'])
+        
+        # Update checkboxes
+        self.repeat_checkbox.setText(texts['repeat_playback'])
+        self.use_delays_checkbox.setText(texts['use_delays'])
+        
+        # Update keyboard shortcuts
+        self.keyboard_shortcuts_label.setText(texts['keyboard_shortcuts'])
+
+# --- ANA UYGULAMA BAŞLATMA BLOĞU ---
 if __name__ == "__main__":
     try:
+        print("Uygulama başlatılıyor...")
         app = QApplication(sys.argv)
         window = PointRecorderApp()
         window.show()
+        print("Ana pencere gösterildi.")
         sys.exit(app.exec_())
     except Exception as e:
-        print(f"Hata oluştu: {e}") 
+        print(f"Başlatma hatası: {e}") 
